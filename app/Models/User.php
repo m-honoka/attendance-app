@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -45,12 +46,12 @@ class User extends Authenticatable
         'admin_status' => 'boolean',
     ];
 
-    public function attendanceRecords()
+    public function attendanceRecords(): HasMany
     {
         return $this->hasMany(AttendanceRecord::class);
     }
 
-    public function stampCorrectionRequests()
+    public function stampCorrectionRequests(): HasMany
     {
         return $this->hasMany(StampCorrectionRequest::class);
     }

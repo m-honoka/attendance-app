@@ -115,3 +115,10 @@
     padding-top: 30px;
     text-align: center;
 }
+
+.attendance__button {
+display: flex;
+justify-content: center;
+align-items: center;
+gap: 20px;
+}
