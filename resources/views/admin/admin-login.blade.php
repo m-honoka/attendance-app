@@ -27,7 +27,7 @@
             <div class="login__heading">
                 <h1 class="login__heading--item">管理者ログイン</h1>
             </div>
-            <form method="POST" action="{{ route('login') }}">
+            <form method="POST" action="{{ route('login.store') }}">
                 @csrf
                 <div class="form__group">
                     <label class="form__label" for="email">メールアドレス</label>

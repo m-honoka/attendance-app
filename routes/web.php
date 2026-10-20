@@ -4,7 +4,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminAttendanceController;
 use App\Http\Controllers\Admin\StaffController;
-
+use App\Http\Controllers\AttendanceController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -32,10 +32,10 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth', 'admin'])->prefix('admin')->as('admin.')->group(function () {
 
     // 管理者 勤怠一覧画面 (URL: /admin/attendance/list, Route名: admin.attendance.list)
-    Route::get('/attendance/list', [AdminAttendanceController::class, 'index'])->name('attendance.list');
+    //Route::get('/attendance/list', [AdminAttendanceController::class, 'index'])->name('attendance.list');
 
     // スタッフ一覧画面 (URL: /admin/staff/list, Route名: admin.staff.list)
-    Route::get('/staff/list', [StaffController::class, 'index'])->name('staff.list');
+    //Route::get('/staff/list', [StaffController::class, 'index'])->name('staff.list');
 
 });
 
@@ -44,13 +44,35 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->as('admin.')->group(funct
 // ----------------------------------------------------
 Route::middleware('auth')->group(function () {
 
-    // 一般ユーザーの勤怠打刻画面
-    Route::get('/attendance', function () {
-        return view('user.attendance-register', [
-            'user' => auth()->user(),
-            'formattedDate' => Carbon::now()->isoFormat('YYYY年M月D日(ddd)'),
-            'formattedTime' => Carbon::now()->format('H:i'),
-        ]);
-    })->name('attendance.register');
+    // 一般ユーザーの勤怠打刻画面の表示
+    Route::get('/attendance', [AttendanceController::class, 'index'])
+        ->name('attendance.index');
 
+    // 出勤打刻
+    Route::post('/attendance/clock-in', [AttendanceController::class, 'clockIn'])
+        ->name('attendance.clockIn');
+
+    // 休憩開始
+    Route::post('/attendance/break-in', [AttendanceController::class, 'breakIn'])
+        ->name('attendance.breakIn');
+
+    // 休憩終了
+    Route::post('/attendance/break-out', [AttendanceController::class, 'breakOut'])
+        ->name('attendance.breakOut');
+
+    // 退勤打刻
+    Route::post('/attendance/clock-out', [AttendanceController::class, 'clockOut'])
+        ->name('attendance.clockOut');
+
+    //　勤怠一覧画面の表示    
+    Route::get('/attendance/list', [AttendanceController::class, 'list'])
+        ->name('attendance.list');
+
+    // 勤怠詳細画面の表示
+    Route::get('/attendance/{id}', [AttendanceController::class, 'show'])
+        ->name('attendance.show');
+
+    // 勤怠修正申請
+    Route::post('/attendance/{id}', [AttendanceController::class, 'storeCorrectionRequest'])
+        ->name('attendance.correction.store');
 });
