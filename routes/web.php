@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AdminAttendanceController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\Admin\AdminApplicationController;
+use App\Http\Controllers\Admin\AdminStaffController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -44,8 +45,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->as('admin.')->group(funct
     Route::post('/attendance/{id}', [AdminAttendanceController::class, 'update'])
         ->name('attendance.update');
 
-    // スタッフ一覧画面 (URL: /admin/staff/list, Route名: admin.staff.list)
-    //Route::get('/staff/list', [StaffController::class, 'index'])->name('staff.list');
+    // スタッフ一覧画面
+    Route::get('/staff/list', [AdminStaffController::class, 'index'])
+        ->name('staff.list');
+
+    // スタッフごとの勤怠一覧画面
+    Route::get(
+        '/attendance/staff/{id}',
+        [AdminStaffController::class, 'show']
+    )->name('staff.attendance');
 
     // 修正申請一覧画面 (URL: /admin/stamp_correction_request/list, Route名: admin.application.list)
     Route::get('/stamp_correction_request/list', [AdminApplicationController::class, 'index'])

@@ -14,6 +14,8 @@ use Illuminate\Support\Str;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
 use Laravel\Fortify\Contracts\LoginResponse;
 use Laravel\Fortify\Fortify;
+use App\Http\Requests\LoginRequest as AppLoginRequest;
+use Laravel\Fortify\Http\Requests\LoginRequest as FortifyLoginRequest;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -22,6 +24,12 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Fortify標準のLoginRequestをアプリ側のLoginRequestに置き換える
+        $this->app->bind(
+            FortifyLoginRequest::class,
+            AppLoginRequest::class
+        );
+
         // ログイン成功後のリダイレクト先を管理者/一般で分岐
         $this->app->singleton(LoginResponse::class, function ($app) {
             return new class implements LoginResponse {
