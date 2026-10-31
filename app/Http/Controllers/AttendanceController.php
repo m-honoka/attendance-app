@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreCorrectionRequest;
 use App\Models\AttendanceRecord;
 use App\Models\BreakTime;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\StampCorrectionRequest;
 
 class AttendanceController extends Controller
 {
@@ -292,38 +294,124 @@ class AttendanceController extends Controller
         // 対象の勤怠記録に紐づく、承認待ちの修正申請を取得
         $application = $attendance->stampCorrectionRequests()
             ->where('status', 'pending')
+            ->with('breaks') // 申請された休憩時間も一緒に取得
             ->latest()
             ->first();
 
         // 休憩記録をBlade用の配列に変換
-        $breaks = $attendance->breakTimes->map(function ($break) {
-            return [
-                'break_in' => $break->break_in
-                    ? Carbon::parse($break->break_in)->format('H:i')
-                    : '',
-                'break_out' => $break->break_out
-                    ? Carbon::parse($break->break_out)->format('H:i')
-                    : '',
-            ];
-        })->toArray();
+        $breaks = $application
+            ? $application->breaks->map(function ($break) {
+                return [
+                    'break_in' => $break->break_in
+                        ? Carbon::parse($break->break_in)->format('H:i')
+                        : '',
+                    'break_out' => $break->break_out
+                        ? Carbon::parse($break->break_out)->format('H:i')
+                        : '',
+                ];
+            })->toArray()
+            : $attendance->breakTimes->map(function ($break) {
+                return [
+                    'break_in' => $break->break_in
+                        ? Carbon::parse($break->break_in)->format('H:i')
+                        : '',
+                    'break_out' => $break->break_out
+                        ? Carbon::parse($break->break_out)->format('H:i')
+                        : '',
+                ];
+            })->toArray();
+
 
         // Bladeが使用する形式にデータを整える
         $data = [
             'id' => $attendance->id,
             'year' => Carbon::parse($attendance->date)->format('Y年'),
             'date' => Carbon::parse($attendance->date)->format('n月j日'),
-            'clock_in' => $attendance->clock_in
-                ? Carbon::parse($attendance->clock_in)->format('H:i')
-                : '',
-            'clock_out' => $attendance->clock_out
-                ? Carbon::parse($attendance->clock_out)->format('H:i')
-                : '',
+            'clock_in' => $application
+                ? ($application->clock_in
+                    ? Carbon::parse($application->clock_in)->format('H:i')
+                    : '')
+                : ($attendance->clock_in
+                    ? Carbon::parse($attendance->clock_in)->format('H:i')
+                    : ''),
+
+            'clock_out' => $application
+                ? ($application->clock_out
+                    ? Carbon::parse($application->clock_out)->format('H:i')
+                    : '')
+                : ($attendance->clock_out
+                    ? Carbon::parse($attendance->clock_out)->format('H:i')
+                    : ''),
             'breaks' => $breaks,
-            'comment' => $attendance->comment ?? '',
+            'comment' => $application
+                ? $application->reason
+                : ($attendance->comment ?? ''),
             'application' => $application,
         ];
 
         return view('user.user-detail', compact('user', 'data'));
+    }
+
+    /**
+     * 勤怠修正申請を保存する
+     */
+    public function storeCorrectionRequest(StoreCorrectionRequest $request, $id)
+    {
+        // 1. ログインユーザーを取得
+        $user = Auth::user();
+
+        // 2. ログインユーザー本人の勤怠記録を取得
+        $attendance = AttendanceRecord::where('user_id', $user->id)
+            ->findOrFail($id);
+
+        // 3. すでに承認待ちの申請がある場合は申請できない
+        $hasPendingRequest = $attendance->stampCorrectionRequests()
+            ->where('status', 'pending')
+            ->exists();
+
+        if ($hasPendingRequest) {
+            return back()->withErrors([
+                'application' => '承認待ちのため修正はできません。',
+            ]);
+        }
+
+        // 4. 入力内容を検証
+        $validated = $request->validated();
+
+        // 5. 修正申請と休憩申請をまとめて保存
+        DB::transaction(function () use ($user, $attendance, $validated) {
+
+            // 修正申請本体を保存
+            $application = StampCorrectionRequest::create([
+                'user_id' => $user->id,
+                'attendance_record_id' => $attendance->id,
+                'clock_in' => $validated['new_clock_in'],
+                'clock_out' => $validated['new_clock_out'],
+                'status' => 'pending',
+                'reason' => $validated['comment'],
+            ]);
+
+            // 申請された休憩時間を保存
+            foreach ($validated['new_break_in'] as $index => $breakIn) {
+
+                $breakOut = $validated['new_break_out'][$index] ?? null;
+
+                // 開始・終了とも空欄なら保存しない
+                if (blank($breakIn) && blank($breakOut)) {
+                    continue;
+                }
+
+                $application->breaks()->create([
+                    'break_in' => $breakIn ?: null,
+                    'break_out' => $breakOut ?: null,
+                ]);
+            }
+        });
+
+        // 6. 詳細画面へ戻る
+        return redirect()
+            ->route('attendance.show', ['id' => $attendance->id])
+            ->with('success', '勤怠修正を申請しました。');
     }
 }
 

@@ -41,11 +41,14 @@
                         <p class="table__description--item">{{ $attendanceRecord['date'] }}</p>
                     </td>
                     <td class="table__description">
-                        <p class="table__description--item">{{ $attendanceRecord['clock_in'] }}
+                        <p class="table__description--item">
+                            {{ $attendanceRecord['clock_in'] ? \Carbon\Carbon::parse($attendanceRecord['clock_in'])->format('H:i') : '' }}
                         </p>
                     </td>
                     <td class="table__description">
-                        <p class="table__description--item">{{ $attendanceRecord['clock_out'] }}</p>
+                        <p class="table__description--item">
+                            {{ $attendanceRecord['clock_out'] ? \Carbon\Carbon::parse($attendanceRecord['clock_out'])->format('H:i') : '' }}
+                        </p>
                     </td>
                     <td class="table__description">
                         <p class="table__description--item">

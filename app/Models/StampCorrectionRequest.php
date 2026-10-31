@@ -29,4 +29,10 @@ class StampCorrectionRequest extends Model
     {
         return $this->belongsTo(AttendanceRecord::class);
     }
+
+    // 申請された休憩時間を複数取得
+    public function breaks()
+    {
+        return $this->hasMany(StampCorrectionRequestBreak::class);
+    }
 }
