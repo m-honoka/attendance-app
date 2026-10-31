@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminAttendanceController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\Admin\AdminApplicationController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -32,11 +33,33 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth', 'admin'])->prefix('admin')->as('admin.')->group(function () {
 
     // 管理者 勤怠一覧画面 (URL: /admin/attendance/list, Route名: admin.attendance.list)
-    //Route::get('/attendance/list', [AdminAttendanceController::class, 'index'])->name('attendance.list');
+    Route::get('/attendance/list', [AdminAttendanceController::class, 'index'])
+        ->name('attendance.list');
+
+    // 管理者 勤怠詳細画面
+    Route::get('/attendance/{id}', [AdminAttendanceController::class, 'show'])
+        ->name('attendance.show');
+
+    // 管理者 勤怠情報の修正
+    Route::post('/attendance/{id}', [AdminAttendanceController::class, 'update'])
+        ->name('attendance.update');
 
     // スタッフ一覧画面 (URL: /admin/staff/list, Route名: admin.staff.list)
     //Route::get('/staff/list', [StaffController::class, 'index'])->name('staff.list');
 
+    // 修正申請一覧画面 (URL: /admin/stamp_correction_request/list, Route名: admin.application.list)
+    Route::get('/stamp_correction_request/list', [AdminApplicationController::class, 'index'])
+        ->name('application.list');
+
+    // 修正申請の詳細画面
+    Route::get('/stamp_correction_request/approve/{id}', [AdminApplicationController::class, 'show'])
+        ->name('application.show');
+
+    // 修正申請を承認する
+    Route::post(
+        '/stamp_correction_request/approve/{id}',
+        [AdminApplicationController::class, 'approve']
+    )->name('application.approve');
 });
 
 // ----------------------------------------------------
