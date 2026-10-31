@@ -1,12 +1,3 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
-
 ## 勤怠管理アプリ
 
 ## 概要
@@ -43,6 +34,79 @@
 
 < - - - 作成したER図の画像 - - - >
 
+```mermaid
+erDiagram
+
+    users ||--o{ attendance_records : "勤怠情報"
+    users ||--o{ stamp_correction_requests : "修正申請"
+
+    attendance_records ||--o{ breaks : "休憩情報"
+    attendance_records ||--o{ stamp_correction_requests : "修正対象"
+
+    stamp_correction_requests ||--o{ stamp_correction_request_breaks : "申請休憩情報"
+
+    users {
+        bigint id PK
+        string name
+        string email UK
+        boolean admin_status
+        timestamp email_verified_at
+        string password
+        string remember_token
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    attendance_records {
+        bigint id PK
+        bigint user_id FK
+        date date
+        time clock_in
+        time clock_out
+        string status
+        string comment
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    breaks {
+        bigint id PK
+        bigint attendance_record_id FK
+        time break_in
+        time break_out
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    stamp_correction_requests {
+        bigint id PK
+        bigint user_id FK
+        bigint attendance_record_id FK
+        time clock_in
+        time clock_out
+        string status
+        string reason
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    stamp_correction_request_breaks {
+        bigint id PK
+        bigint stamp_correction_request_id FK
+        time break_in
+        time break_out
+        timestamp created_at
+        timestamp updated_at
+    }
+```
+
+※ attendance_recordsテーブルでは、user_idとdateの組み合わせに
+UNIQUE制約を設定しています。
+
 ## URL
 
-- 開発環境 : http://lacalhost/
+- 開発環境 : http://localhost/
+
+```
+
+```
